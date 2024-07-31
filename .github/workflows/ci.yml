@@ -1,0 +1,38 @@
+name: Run WEB Tests
+run-name: On Push - Web Tests Run
+on: [push]
+
+jobs:
+  web-tests:
+    runs-on: ubuntu-20.04
+    permissions: write-all
+    strategy:
+      matrix:
+        browser: [chromium, firefox, webkit]
+        os: [ubuntu-20.04, macos-12, windows-2022]
+      fail-fast: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Run Playwright Tests
+        run: npx playwright test
+
+      - name: Publish Test Results (Junit)
+        if: always()
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: playwright-report/results.xml
+          check_name: Web Tests Results - ${{ matrix.browser }} on ${{ matrix.os }}
